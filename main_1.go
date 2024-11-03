@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Function to initialize a 3D array with random temperature values
+
 func initializeTemps(days, zones, hours int) [][3][24]float64 {
 	rand.Seed(time.Now().UnixNano())
 	var temperatures = make([][3][24]float64, days)
@@ -15,19 +15,19 @@ func initializeTemps(days, zones, hours int) [][3][24]float64 {
 	for d := 0; d < days; d++ {
 		for z := 0; z < zones; z++ {
 			for h := 0; h < hours; h++ {
-				temperatures[d][z][h] = 15 + rand.Float64()*10 // temperatures between 15 and 25°C
+				temperatures[d][z][h] = 15 + rand.Float64()*10 
 			}
 		}
 	}
 	return temperatures
 }
 
-// Function to calculate the daily average temperature for each zone concurrently
+
 func calculateDailyAverages(temps [][3][24]float64, wg *sync.WaitGroup, results chan<- [][3]float64) {
 	defer wg.Done()
 	dailyAverages := make([][3]float64, len(temps))
 
-	// Calculate average temperature concurrently for each day
+	
 	for d := 0; d < len(temps); d++ {
 		wg.Add(1)
 		go func(day int) {
@@ -41,12 +41,12 @@ func calculateDailyAverages(temps [][3][24]float64, wg *sync.WaitGroup, results 
 			}
 		}(d)
 	}
-	// Wait until all daily averages are calculated
+	
 	wg.Wait()
 	results <- dailyAverages
 }
 
-// Function to find the hottest zone for each day concurrently
+
 func hottestZonePerDay(averages [][3]float64, wg *sync.WaitGroup, results chan<- []int) {
 	defer wg.Done()
 	hottestZones := make([]int, len(averages))
@@ -71,32 +71,32 @@ func hottestZonePerDay(averages [][3]float64, wg *sync.WaitGroup, results chan<-
 }
 
 func main() {
-	// Initialize data
+	
 	days, zones, hours := 7, 3, 24
 	temperatures := initializeTemps(days, zones, hours)
 
-	// Channels and WaitGroup for managing concurrency
+	
 	dailyAveragesChannel := make(chan [][3]float64, 1)
 	hottestZonesChannel := make(chan []int, 1)
 	var wg sync.WaitGroup
 
-	// Start calculating daily averages concurrently
+	
 	wg.Add(1)
 	go calculateDailyAverages(temperatures, &wg, dailyAveragesChannel)
 
-	// Retrieve daily averages from channel and calculate hottest zones concurrently
+	
 	wg.Add(1)
 	go func() {
 		dailyAverages := <-dailyAveragesChannel
 		go hottestZonePerDay(dailyAverages, &wg, hottestZonesChannel)
 	}()
 
-	// Wait for all goroutines to finish
+	
 	wg.Wait()
 	close(dailyAveragesChannel)
 	close(hottestZonesChannel)
 
-	// Retrieve results and display them
+	
 	dailyAverages := <-dailyAveragesChannel
 	fmt.Println("Daily Average Temperatures for Each Zone:")
 	for d, averages := range dailyAverages {
